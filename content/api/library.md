@@ -13,7 +13,6 @@ keywords:
    - "library"
    - "metric"
    - "origin"
-   - "plot"
    - "source"
 ---
 
@@ -103,8 +102,8 @@ See _Get a single group_ above for group object format.
 ### Update an existing group
 
 ```
-PUT /library/sourcegroups/<id>
-PUT /library/metricgroups/<id>
+PUT /api/v1/library/sourcegroups/<id>
+PUT /api/v1/library/metricgroups/<id>
 ```
 
 Takes a group from the request body and overwrites an existing library group item.
@@ -119,8 +118,8 @@ See _Get a single group_ above for group object format.
 ### Delete an existing group
 
 ```
-DELETE /library/sourcegroups/<id>
-DELETE /library/metricgroups/<id>
+DELETE /api/v1/library/sourcegroups/<id>
+DELETE /api/v1/library/metricgroups/<id>
 ```
 
 Removes an existing group item from the library.
@@ -235,7 +234,7 @@ See _Get a single scale_ above for scale object format.
 ### Update an existing scale
 
 ```
-PUT /library/scales/<id>
+PUT /api/v1/library/scales/<id>
 ```
 
 Takes a scale from the request body and overwrites an existing library scale item.
@@ -250,7 +249,7 @@ See _Get a single scale_ above for scale object format.
 ### Delete an existing scale
 
 ```
-DELETE /library/scales/<id>
+DELETE /api/v1/library/scales/<id>
 ```
 
 Removes an existing scale item from the library.
@@ -352,7 +351,7 @@ See _Get a single unit_ above for unit object format.
 ### Update an existing unit
 
 ```
-PUT /library/units/<id>
+PUT /api/v1/library/units/<id>
 ```
 
 Takes a unit from the request body and overwrites an existing library unit item.
@@ -367,7 +366,7 @@ See _Get a single unit_ above for unit object format.
 ### Delete an existing unit
 
 ```
-DELETE /library/units/<id>
+DELETE /api/v1/library/units/<id>
 ```
 
 Removes an existing unit item from the library.
@@ -411,6 +410,7 @@ Optional parameters:
  * `filter` (_string_): the [pattern](/api/#filter-patterns) to apply on graph names
  * `limit` (_integer_): the maximum number of items to return
  * `offset` (_integer_): the offset to start fetching from
+ * `templates` (_integer_): flag for returning graph templates (`1` = yes)
 
 Response:
 
@@ -468,6 +468,21 @@ Response:
 }
 ```
 
+or for a graph template instance:
+
+```javascript
+{
+    "id": "34a15691-5872-462f-7c42-177c18dd8a00",
+    "name": "server1.example.net - load",
+    "description": "Load average for server1.example.net",
+    "template": false,
+    "link": "dcde7cf8-f637-4303-592e-402ba3e9f017",
+    "attributes": {
+        "source": "server1.example.net"
+    }
+}
+```
+
 Graph types:
 
  * `1`: area
@@ -508,12 +523,25 @@ Additional status codes:
  * __404 Not Found:__ the graph item to inherit from does not exist
  * __409 Conflict:__ another graph with the same name already exists
 
-See _Get a single graph_ above for graph object format.
+See _Get a single graph_ above for graph object formats.
+
+#### Templates _new in version 0.3_
+
+To create a graph template, `template` property must be set to `true`. The following properties are suitable to
+template expansion:
+
+ * graph: `title` and `description`
+ * series: `origin`, `source` and `metric`
+
+<span class="fa fa-info-circle"></span> Template attributes must follow Go template syntax (e.g. `{{ .attr1 }}`).
+
+To instantiate a template, both `link` and `attributes` properties must be provided. Being respectively, the identifier
+of the template being instantiated and an object specifying attributes values (see _Get a single graph_ example above).
 
 ### Update an existing graph
 
 ```
-PUT /library/graphs/<id>
+PUT /api/v1/library/graphs/<id>
 ```
 
 Takes a graph from the request body and overwrites an existing library graph item.
@@ -528,7 +556,7 @@ See _Get a single graph_ above for graph object format.
 ### Delete an existing graph
 
 ```
-DELETE /library/graphs/<id>
+DELETE /api/v1/library/graphs/<id>
 ```
 
 Removes an existing graph item from the library.
@@ -536,69 +564,6 @@ Removes an existing graph item from the library.
 Additional status codes:
 
  * __404 Not Found:__ the item to delete does not exist
-
-### Get graphs plots values
-
-```
-POST /api/v1/library/graphs/plots
-```
-
-Takes a plot request from the request body and returns graph series plots values and information.
-
-Additional status codes:
-
- * __404 Not Found:__ the requested graph template does not exist
-
-Request:
-
-```javascript
-{
-    "id": "909fe2df-3064-4ee2-5f52-4eca2c953c76",
-    "range": "-1d"
-}
-```
-
-<span class="fa fa-info-circle"></span> Note: the request could also accept a graph request along with the range,
-replacing `id` by a `graph` parameter. See _Get a single graph_ response example for request structure.
-
-Response (plots values are truncated):
-
-```javascript
-{
-    "id": "909fe2df-3064-4ee2-5f52-4eca2c953c76",
-    "name": "Chart name",
-    "description": "A great chart description.",
-    "type": 1,
-    "series": [
-        {
-            "stack_id": 0,
-            "info": {
-                "min": 0,
-                "max": 1.023,
-                "last": 0.381,
-                "avg": 0.109164
-            },
-            "plots": [
-                0.348,
-                0.351,
-                0.42300000000000004,
-                …
-                0,
-                0.10500000000000001,
-                0.42400000000000004,
-                0.381,
-                null
-            ],
-            "name": "serie0"
-        }
-    ],
-    "stack_mode": 0,
-    "start": "2013-01-01T12:34:56+01:00",
-    "end": "2013-01-02T12:34:56+01:00",
-    "step": 9.944751381,
-    "modified": "2013-01-02T12:34:56+01:00"
-}
-```
 
 ## Collections
 
@@ -690,7 +655,7 @@ See _Get a single collection_ above for group object format.
 ### Update an existing collection
 
 ```
-PUT /library/collections/<id>
+PUT /api/v1/library/collections/<id>
 ```
 
 Takes a collection from the request body and overwrites an existing library collection item.
@@ -705,7 +670,7 @@ See _Get a single collection_ above for group object format.
 ### Delete an existing collection
 
 ```
-DELETE /library/collections/<id>
+DELETE /api/v1/library/collections/<id>
 ```
 
 Removes an existing collection item from the library.
